@@ -1,0 +1,188 @@
+---
+title: "Assignment4"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 5.20
+
+Import data
+```{r}
+X1 <- read.table("T5-12.DAT", col.names = c("tail", "wing"))
+head(X1)
+
+meanX1 <- colMeans(X1)
+covX1 <- cov(X1)
+p1 <- ncol(X1)
+n1 <- nrow(X1)
+with(X1, plot(tail, wing))
+```
+
+Compute 95% confidence ellipsoid 
+
+```{r}
+require(car)
+eigensys1 <- eigen(covX1)
+eigensys1$vectors # eigenvectors, i.e. axes of the ellipsoid
+alpha = .05
+
+fscale <- function(p, n, a) {
+  p*(n-1)/(n-p)/n * qf(1-a, p, n-p)
+} # compute scale for ellipsoid
+
+radius1 <- sqrt(fscale(p1, n1, alpha))
+axesLength <- sqrt(eigensys1$values) * radius1
+axesLength # length of axes
+with(X1, plot(tail, wing))
+ellipse1 <- ellipse(meanX1, covX1, radius1)
+points(190, 275, col="green", pch=4)
+```
+
+We can see that point $(190, 275)$ (marked in green in the plot) falls into the 95% confidence ellipse. Therefore, we conclude these are plausible values.
+
+Intervals
+```{r}
+cat("T^2 Simultaneous intervals:")
+with(X1, plot(tail, wing))
+ellipse1 <- ellipse(meanX1, covX1, radius1)
+d1 <- radius1 * sqrt(covX1[1, 1])
+d2 <- radius1 * sqrt(covX1[2, 2])
+sprintf("mu1: (%f, %f), mu2: (%f, %f)",
+        meanX1[1] - d1, meanX1[1] + d1,
+        meanX1[2] - d2, meanX1[2] + d2)
+rect(meanX1[1] - d1, meanX1[2] - d2, meanX1[1] + d1, meanX1[2] + d2, lty = 1)
+cat("Bonferroni intervals:")
+tcoef <- qt(1 - alpha / (2*p1), n1 - 1)
+d1 <- tcoef * sqrt(covX1[1, 1] / n1)
+d2 <- tcoef * sqrt(covX1[2, 2] / n1)
+sprintf("mu1: (%f, %f), mu2: (%f, %f)",
+        meanX1[1] - d1, meanX1[1] + d1,
+        meanX1[2] - d2, meanX1[2] + d2)
+rect(meanX1[1] - d1, meanX1[2] - d2, meanX1[1] + d1, meanX1[2] + d2, lty = 2)
+legend("topright", legend = c("T^2", "Bonferroni"), lty = c(1, 2))
+```
+
+Although $T^2$ simultaneous intervals are longer than those of Bonferroni's, $T^2$ intervals are effective for all combinations of $\mu_i$'s while Bonferroni's are only valid for those specified ones.
+
+Q-Q Plot
+```{r}
+plotqq <- function(col, title="") {
+  qqp <- qqnorm(col, main = title)
+  qqline(col)
+  with(qqp, cor(x, y))
+}
+rqs1 <- sapply(X1, plotqq)
+rqs1
+with(X1, dataEllipse(tail, wing))
+```
+
+We observe that Q-Q plots for tail and wing are both approximately straight lines and the correlation coefficients are > 0.985. Furthermore, the scatter plot has approximately elliptical shape. We conclude that the bivariate normal distribution is a viable population model.
+
+## 5.22
+
+Import data
+```{r}
+X2 <- read.table("T5-13.dat", col.names = c("fuel", "repair", "capital"))
+head(X2)
+layout(matrix(1:3, nrow = 1, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs2 <- sapply(X2, plotqq)
+pairs(X2)
+```
+
+We can clealy find out two outliers. Now we will remove them.
+
+```{r}
+X2_ <- X2[c(-9, -21), ]
+layout(matrix(1:3, nrow = 1, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs2_ <- sapply(X2_, plotqq)
+pairs(X2_)
+```
+
+After removing the outliers, we construct the Q-Q plots. The data now appear to be normally distributed as Q-Q plots are nearly straight lines. Also, we look up the table with size $n=25$, significant level $\alpha=.05$ and find that the critical value is .9591 which is less than each of the correlation coefficients of 3 variables. Therefore we have confidence of the marginal normality at level of significance $\alpha=.05$
+
+```{r}
+meanX2 <- colMeans(X2)
+covX2 <- cov(X2)
+p2 <- ncol(X2)
+n2 <- nrow(X2)
+
+radius2 <- sqrt(fscale(p2, n2, alpha))
+d1 <- radius2 * sqrt(covX2[1, 1])
+d2 <- radius2 * sqrt(covX2[2, 2])
+d3 <- radius2 * sqrt(covX2[3, 3])
+cat(sprintf("T^2 Simultaneous intervals:\nmu1: (%f, %f), mu2: (%f, %f), mu3: (%f, %f)", 
+        meanX2[1] - d1, meanX2[1] + d1,
+        meanX2[2] - d2, meanX2[2] + d2,
+        meanX2[2] - d3, meanX2[2] + d3))
+
+tcoef <- qt(1 - alpha / (2*p2), n2 - 1)
+d1 <- tcoef * sqrt(covX2[1, 1] / n2)
+d2 <- tcoef * sqrt(covX2[2, 2] / n2)
+d3 <- tcoef * sqrt(covX2[3, 3] / n2)
+cat(sprintf("Bonferroni intervals:\nmu1: (%f, %f), mu2: (%f, %f), mu3: (%f, %f)", 
+        meanX2[1] - d1, meanX2[1] + d1,
+        meanX2[2] - d2, meanX2[2] + d2,
+        meanX2[2] - d3, meanX2[2] + d3))
+```
+
+We can see that Bonferroni intervals are shorter than $T^2$ intervals. However, $T^2$ intervals are effective for all combinations of $\mu_i$'s while Bonferroni's are not.
+
+## 5.23
+
+Import data
+```{r}
+X3 <- read.table("T6-13.DAT")
+X3 <- X3[X3$V5 == 1, -5] # select rows of which period is 1
+head(X3)
+```
+
+Construct Q-Q plots
+```{r}
+meanX3 <- colMeans(X3)
+covX3 <- cov(X3)
+p3 <- ncol(X3)
+n3 <- nrow(X3)
+
+layout(matrix(1:4, nrow = 2, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs3 <- sapply(X3, plotqq)
+rqs3
+
+# Chi-square
+dev.off() # clean plots
+squaredDist <- mahalanobis(X3, meanX3, covX3)
+qqplot(qchisq(ppoints(n3, a = .5), df = p3), squaredDist, main = "Chi-square Q-Q Plot", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+sum(squaredDist <= qchisq(.5, df = p3)) / n3 # % of falling into first half
+```
+
+These Q-Q plots are approximately straight lines. Also, we look up the table with size $n=30$, significant level $\alpha=.10$ and find that the critical value is .9715 which is less than each of the correlation coefficients of 4 variables. Therefore we have confidence of the marginal normality at level of significance $\alpha=.10$
+
+In addition, we can see that roughly half of $d_j^2 \le q_{c,p}(.50)$ and that
+the chi-square plot is roughly a straight line with slope 1 passing through the origin. Thus, we have due confidance over the multivariate normality of the data.
+
+```{r}
+radius3 <- sqrt(fscale(p3, n3, alpha))
+d1 <- radius2 * sqrt(covX3[1, 1])
+d2 <- radius2 * sqrt(covX3[2, 2])
+d3 <- radius2 * sqrt(covX3[3, 3])
+cat(sprintf("T^2 Simultaneous intervals:\nmu1: (%f, %f), mu2: (%f, %f), mu3: (%f, %f)", 
+        meanX3[1] - d1, meanX3[1] + d1,
+        meanX3[2] - d2, meanX3[2] + d2,
+        meanX3[2] - d3, meanX3[2] + d3))
+
+tcoef <- qt(1 - alpha / (2*p2), n2 - 1)
+d1 <- tcoef * sqrt(covX3[1, 1] / n2)
+d2 <- tcoef * sqrt(covX3[2, 2] / n2)
+d3 <- tcoef * sqrt(covX3[3, 3] / n2)
+cat(sprintf("Bonferroni intervals:\nmu1: (%f, %f), mu2: (%f, %f), mu3: (%f, %f)", 
+        meanX3[1] - d1, meanX3[1] + d1,
+        meanX3[2] - d2, meanX3[2] + d2,
+        meanX3[2] - d3, meanX3[2] + d3))
+```
+
+We can see that Bonferroni intervals are shorter than $T^2$ intervals. However, $T^2$ intervals are effective for all combinations of $\mu_i$'s while Bonferroni's are not.
+
+

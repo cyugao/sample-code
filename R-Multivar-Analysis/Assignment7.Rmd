@@ -1,0 +1,55 @@
+---
+title: "Assignment7"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 8.12
+Import data
+```{r}
+X1 <- read.table('T1-5.DAT')
+head(X1)
+S1 <- cov(X1)
+R1 <- cov2cor(S1)
+pca1 <- prcomp(X1)
+summary(pca1)
+cat("First principal component using covariance matrix:")
+pca1$rotation[,1]
+pcar1 <- prcomp(X1, scale. = T)
+summary(pcar1)
+cat("First three principal components using covariance matrix:")
+pcar1$rotation[,1:3]
+```
+We can see great difference between the result obtained using S vs. R. Since measurements differ in scale, there variances differ sharply. Variance of solar radiation is much greater than those of others. Therefore, in the first principal component (87% of total variance) obtained using covariance matrix, the coefficient of solar radiation is 0.993. This makes the solar radiation the major indicator, which is inappropriate.
+Using the standardized correlation matrix solves this problem, making variables on a similar scale. We observe from the first component that the coef of wind is negative while coefs of others are positive. This may imply some overall air pollution level. First three PCs account for 70.4% of total sample variance while first four contribute to 80.8% of total. Hence, we can summarize the data in three dimensions.
+
+## 8.14
+Import data
+```{r}
+X2 <- read.table("T5-1.DAT")
+head(X2)
+pca2 <- prcomp(X2)
+summary(pca2)
+v1 <- pca2$rotation[,1]
+cat("First principal component:")
+print(v1)
+X2_pc1 <- as.matrix(X2) %*% as.vector(v1) # compute first pc
+qqline(X2_pc1)
+```
+
+We find out that the first principal component accounts for 97% of total sample variance and that coefficient of sodium is 0.998. This results from the large sample variance of sodium (scale much larger compared to other variables).
+We construct the Q-Q plot of the first principal component. There are no suspect observations as we observe that the points nearly lie on a straight line.
+
+## 8.17
+Import data
+```{r}
+X3 <- read.table("T1-8.DAT")
+head(X3)
+pca3 <- prcomp(X3)
+summary(pca3)
+eigval <- pca3$sdev ^ 2 # eigenvalues
+eigval
+pca3$rotation[, 1:2] # show eigenvectors, i.e. principal components
+```
+We see that the first principal component accounts for 83% of total sample variance and first two account for 92.6% of total. First two principal components are shown above.

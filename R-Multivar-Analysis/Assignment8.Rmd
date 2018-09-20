@@ -1,0 +1,92 @@
+---
+title: "Assignmen8"
+author: "Gcy"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 9.20
+
+Import data
+```{r}
+options(digits = 4)
+X1 <- read.table("T1-5.DAT")
+X1 <- X1[,c(1,2,5,6)]
+n1 <- nrow(X1)
+head(X1)
+
+(meanX1 <- colMeans(X1))
+covX1 <- cov(X1)
+covX1
+
+pca1 <- prcomp(X1)
+L <- t(t(pca1$rotation) * pca1$sdev)
+(L1 <- L[, 1])
+(psi1 <- diag(covX1 - L1 %*% t(L1)))
+(L2 <- L[, c(1,2)])
+(psi2 <- diag(covX1 - L2 %*% t(L2)))
+```
+a) First two factor loadings are shown above.
+
+Maximum likelihood estimates
+```{r}
+# m = 1
+require(psych)
+fa1 <- fa(covX1, covar = T, n.obs = n1, fm = "ml")
+loadings(fa1)
+cat("Specific variances:")
+(psi_fa1 <- diag(residuals(fa1))) # specific variance
+cat("MLE residual:")
+residuals(fa1) - diag(psi_fa1)
+cat("PCA residual:")
+covX1 - L1 %*% t(L1) - diag(psi1)
+
+# m = 2
+fa2 <- fa(covX1, nfactors = 2, n.obs = n1, covar = T, fm = "ml")
+(L2_mle <- loadings(fa2))
+cat("Specific variances:")
+(psi_fa2 <- diag(residuals(fa2))) # specific variance
+cat("MLE residual:")
+residuals(fa2) - diag(psi_fa2)
+cat("PCA residual:")
+covX1 - L2 %*% t(L2) - diag(psi2)
+```
+Factor solutions are shown above. We could compare the residual matrices between these two methods. We find that maximum likelihood method does a better job in this sense.
+
+## 9.21
+```{r}
+# varimax solution
+# pca method
+
+pca2_r <- principal(covX1, 2, n.obs = n1, covar = T)
+(L2_r <- loadings(pca2_r))
+cat("Specific variances:")
+(psi_pca2_r <- diag(residuals(pca2_r))) # specific variance
+
+# Maximum likelihood method
+fa2_r <- fa(covX1, nfactors = 2, covar = T, n.obs = n1, fm = "ml", rotate = "varimax")
+(L2_mle_r <- loadings(fa2_r))
+cat("Specific variances:")
+(psi_fa2_r <- diag(residuals(fa2_r))) # specific variance
+cat("MLE residual:")
+residuals(fa2_r) - diag(psi_fa2_r)
+cat("PCA residual:")
+covX1 - L2_r %*% t(L2_r) - diag(psi_pca2_r)
+```
+By comparing results, we see that two solutions are consistent with each other.
+
+## 9.22
+```{r}
+d <- t(X1) - meanX1
+delta <- t(L2_mle) %*% diag(1/psi_fa2) %*% L2_mle
+scores_mle_wls <- t(solve(delta, t(L2_mle)) %*% diag(1/psi_fa2) %*% d)
+head(scores_mle_wls)
+scores_mle_reg <- t(t(L2_mle) %*% solve(covX1, d))
+head(scores_mle_reg)
+# pca
+L0 <- (t(pca1$rotation) / pca1$sdev)[c(1,2),]
+pca_scores <- t(L0 %*% d)
+head(pca_scores)
+```
+Scores are shown above. We can see that they differ quite a lot.

@@ -1,0 +1,74 @@
+---
+title: "Assignment 2"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 4.28
+
+Import data
+```{r}
+options(digits = 3)
+X1 <- read.table('T1-5.DAT')
+head(X1)
+solar <- X1$V2 # solar radiation column
+```
+
+Construct a Q-Q plot
+```{r}
+qqp <- qqnorm(solar)
+qqline(solar) # add a reference line
+rq <- with(qqp, cor(x, y)) # compute correlation coefficient
+```
+
+We can look up the critical value for test with $n = 40$ and $\alpha = .05$ It is $.9726 > rq=0.969$.
+Therefore, we reject the hypothesis of normality at level of significance $\alpha = 0.05$.
+
+## 4.31
+
+Import and split data
+```{r}
+X2 <- read.table('T1-6.DAT')
+head(X2)
+splitX2 <- split(X2[,-6], X2$V6)
+nonmult <- splitX2[[1]]
+mult <- splitX2[[2]]
+nrow(nonmult)
+nrow(mult)
+```
+
+Construct qqplot and compute rqs
+```{r}
+plotqq <- function(col) {
+  qqp <- qqnorm(col, main = "");
+  qqline(col);
+  with(qqp, cor(x, y))
+}
+layout(matrix(1:10, nrow = 2, byrow = TRUE), respect = TRUE)
+par(mar=rep.int(1,4))
+nonmult.rqs <-  sapply(nonmult, plotqq)
+mult.rqs <-  sapply(mult, plotqq)
+nonmult.rqs
+mult.rqs
+```
+As we can see for non-multiple-sclerosis group, only V4 has a qr > 0.97 Thus we remain skeptical about the normality assumption.
+For multiple-sclerosis group, V1, V3 and V5 all have qrs > 0.97 while qrs of V3 and V5 are less than 0.85.
+
+We can use shaprio test as well to validate the normality assumption.
+```{r}
+results_mult <- sapply(mult, shapiro.test)
+mult.shaprio_pvalues <- simplify2array(results_mult["p.value", ])
+results_nonmult <- sapply(nonmult, shapiro.test)
+nonmult.shaprio_pvalues <- simplify2array(results_nonmult["p.value", ])
+```
+
+According to Royston, the normality should be adequate for p-value < 0.1
+```{r}
+mult.shaprio_pvalues
+mult.shaprio_pvalues < 0.1
+nonmult.shaprio_pvalues
+nonmult.shaprio_pvalues < 0.1
+```
+
+Therefore, from Shaprio test we conclude that for multiple-sclerosis group the marginal normality for the 4th variable is dubious while that for other variables is convincing, and that for non-multiple-sclerosis group the marginal normality is convincing for all variables.

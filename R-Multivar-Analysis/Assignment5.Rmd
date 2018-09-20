@@ -1,0 +1,116 @@
+---
+title: "Assignment5"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 6.16
+
+Import data
+```{r}
+X <- read.table("T4-3.DAT")
+X <- X[, -5] # only need first 4 variables
+head(X)
+
+meanX <- colMeans(X)
+covX <- cov(X)
+n <- nrow(X)
+p <- ncol(X)
+```
+
+The outlier is shown in red.
+
+Consider the contrast matrix and do $T^2$ test
+```{r}
+C <-  matrix(c(c(1,-1,0,0),
+           c(1,0,-1,0),
+           c(1,0,0,-1)), nrow = 3, byrow = T)
+Cx <- C %*% meanX
+newcov <- C %*% covX %*% t(C)
+T_norm <- t(Cx)  %*% solve(newcov, Cx) # compute T^2 statistic divided by n
+T_norm
+
+fscale <- function(p, n, a) {
+  p*(n-1)/(n-p)/n * qf(1-a, p, n-p)
+}
+alpha <- .05
+threshold <- fscale(p-1, n, alpha)
+threshold
+```
+
+We can see that $T^2 / n$ is 8.49, which is much greater than the threshold 0.32. Therefor we reject the null hypothesis $C\mu = 0$
+at the significant level $\alpha=.05$.
+
+We can also interpret the outlier with $x_1 = 284$ or observation 31 as a misprint and test with $x_1 = 184$ for this observation. This won't make much difference since 184 is close to the sample mean $\bar x_1$ and this change contributes little to the overall $T^2$ statistic.
+
+For a comparison of the dynamic measurements with the static ones, we can choose the contrast vector $c = (1, 1, -1, -1)'$.
+
+Compute 95% simultaneous interval
+```{r}
+c0 <- c(1, 1, -1, -1)
+c0x <- c0 %*% meanX
+radius <- sqrt(threshold * (c0 %*% covX %*% c0))
+cat(sprintf("interval: %.2f ± %.2f", c0x, radius))
+```
+
+## 6.20
+
+Import data
+```{r}
+male <- read.table('T6-11.DAT', col.names = c("tail", "wing"))
+female <- read.table('T5-12.DAT', col.names = c("tail", "wing"))
+head(male)
+head(female)
+
+p <- 2
+
+with(male, plot(tail, wing)) # scatter plot
+outlier_idx <- which(male$tail == 284)
+outlier <- male[outlier_idx, ]
+with(outlier, points(tail, wing, col='red', pch=16)) # color the outlier red
+```
+
+Eliminate the outlier and test for equality of mean vectors
+```{r}
+male_correct <- male[-outlier_idx, ]
+n1 <- nrow(male_correct)
+n2 <- nrow(female)
+mu1 <- colMeans(male_correct)
+mu2 <- colMeans(female)
+S1 <- cov(male_correct)
+S2 <- cov(female)
+Spool <- ((n1 - 1) * S1 + (n2 - 1) * S2) / (n1 + n2 - 2)
+diff_mu <- mu1 - mu2
+T2 <- diff_mu %*% solve(Spool * (1/n1 + 1/n2), diff_mu)
+T2
+threshold <- (n1+n2-1) * fscale(p, n1+n2-1, alpha)
+threshold
+
+comb <- solve(Spool, diff_mu) # most responsible linear combination
+comb
+```
+
+We can see that $T^2$ statistic is about 24.965, which is greater that the threshold 10.276. Therefore, we reject the hypothesis $H_0: \mu_1 - \mu_2 = 0$ at the significant level $\alpha=.05$.
+And we find the most responsible linear combination vector $(-0.157, 0.093)$ by computing $S_{pooled}^{-1}(\bar x_1 - \bar x_2)$.
+
+Compute comfidence region and simultaneous confidence intervals
+```{r}
+eigensys <- eigen(Spool)
+eigensys$vectors # axis of the ellipse
+radius <- sqrt(threshold * (1/n1 + 1/n2))
+axesLength <- sqrt(eigensys$values) * radius
+axesLength # length of axes
+
+library(car)
+plot.new()
+ellipse1 <- ellipse(c(0, 0), Spool, radius, draw = F)
+plot(ellipse1, type = 'l')
+
+# compute 95% simultaneous confidence intervals
+# first component (tail)
+cat(sprintf("tail: %.2f ± %.2f", diff_mu[1], radius * sqrt(Spool[1,1])))
+cat(sprintf("wing: %.2f ± %.2f", diff_mu[2], radius * sqrt(Spool[2,2])))
+```
+
+From the simultaneous confidence intervals, we cannot be sure if male or female birds are generally larger.

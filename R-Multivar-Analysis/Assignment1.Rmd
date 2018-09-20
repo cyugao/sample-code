@@ -1,0 +1,124 @@
+---
+title: "Assignment 1"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 1.16
+
+Import data
+```{r}
+options(digits = 3)
+X1 <- read.table('T1-8.DAT')
+head(X1)
+```
+
+Compute means, covariance and correlation matrix
+
+```{r}
+n1 <- nrow(X1) # sample sizes
+
+avgX1 <- colMeans(X1) # means
+avgX1
+
+S1 <- cov(X1) # sample covariance, divided by n-1
+Sn1 <- S1 * (n1 - 1) / n1 # divided by n
+Sn1
+cor1 <- cor(X1) # correlation coefs
+cor1
+```
+
+*Interpretation:* From the correlation matrix we can observe that the variables have a positive (linear) correlation with each other, especially for those dominant and non-dominant pairs (V1 & V2: .852, V3 & V4: .894, V5 & V6: .729)
+
+Furthermore we can validate this from pairwise scatter plots
+```{r}
+pairs(X1)
+```
+
+## 1.18
+1.17
+
+We first do some routine calculations.
+
+*We need to modify "KOR, S" to "KOR(S)" and do the similar for "KOR, N" to ensure that the data can be properly imported.*
+
+```{r}
+X2 <- read.table('T1-9.DAT', row.names = 1)
+head(X2)
+
+n2 <- nrow(X2) # sample sizes
+
+avgX2 <- colMeans(X2) # means
+avgX2
+
+S2 <- cov(X2) # sample covariance, divided by n-1
+Sn2 <- S2 * (n2 - 1) / n2 # divided by n
+Sn2
+cor2 <- cor(X2) # correlation coefs
+cor2
+```
+
+We can see from the first row that the magnitudes of the correlation coefs decrease as we go from shorter (100m) to the longer (marathon) running distances (all regarding to 100m). This means that shorter distance running records are more correlated with shorter ones than longer ones. Similarly, from the last row we interpret that longer distance running records are more correlated with longer ones than shorter ones.
+
+1.18
+
+Now we convert the records into speed measured in meters per second.
+```{r}
+scale <- c(100, 200, 400, 800 / 60, 1500 / 60, 3000 / 60, 42195 / 60) # scales
+X2_converted <- t(scale / t(X2)) # Element-wise division in R are done in terms of each column; transpose needed
+head(X2_converted)
+
+avgX2_converted <- colMeans(X2_converted) # means
+avgX2_converted
+
+S2_converted <- cov(X2_converted) # sample covariance, divided by n-1
+Sn2_converted <- S2 * (n2 - 1) / n2 # divided by n
+Sn2_converted
+cor2_converted <- cor(X2_converted) # correlation coefs
+cor2_converted
+```
+
+We can see from the first row that the magnitudes of the correlation coefs decrease as we go from shorter (100m) to the longer (marathon) running distances (all regarding to 100m). This means that shorter distance running record speeds are more correlated with shorter ones than longer ones. Similarly, from the last row we interpret that longer distance running records speeds are more correlated with longer ones than shorter ones.
+These results agree with those of in Ex 1.17.
+
+## 1.27
+
+Import data
+```{r}
+X3 <- read.table('T1-11.DAT', col.names = c("sizes", "visitors"))
+head(X3)
+```
+
+Compute means, covariance and correlation matrix
+
+```{r}
+n3 <- nrow(X3) # sample sizes
+
+avgX3 <- colMeans(X3) # means
+avgX3
+
+S3 <- cov(X3) # sample covariance, divided by n-1
+Sn3 <- S3 * (n3 - 1) / n3 # divided by n
+Sn3
+cor3 <- cor(X3[ ,1], X3[, 2]) # correlation coefs
+cor3
+```
+
+Scatter plot
+```{r}
+plot(X3[,1], X3[,2], xlab = "Size / acres", ylab = "Visitors / million", main = "Sizes vs. Attendance of National Parks")
+ind <- which.max(X3[,2])
+text(X3[ind,1], X3[ind,2], labels = "Great Smoky", pos = 4)
+```
+
+We can see that there is an unusual point in the upper left (Great Smoky)
+
+```{r}
+cor3_dropped <- cor(X3[-ind, 1], X3[-ind, 2])
+cor3_dropped
+```
+
+After dropping this point, the correlation coef changes from .173 to .391. Clearly, this atypical data point significantly reduces the correlation coefficient.
+
+The correlation won't change if we measure size in square miles because if we do that the size data only differs a constant factor, which is normalized in the correlation coefficient formula (divide by square root of the variance).

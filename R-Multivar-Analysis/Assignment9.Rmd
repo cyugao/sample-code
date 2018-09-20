@@ -1,0 +1,92 @@
+---
+title: "Assignment9"
+author: "Gcy"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 9.20
+
+Import data
+```{r}
+options(digits = 4)
+X1 <- read.table("T1-5.DAT")
+X1 <- X1[,c(1,2,5,6)]
+n1 <- nrow(X1)
+head(X1)
+
+(meanX1 <- colMeans(X1))
+covX1 <- cov(X1)
+covX1
+
+pca1 <- prcomp(X1, scale. = T)
+L <- t(t(pca1$rotation) * pca1$sdev)
+(L1 <- L[, 1])
+(psi1 <- diag(covX1 - L1 %*% t(L1)))
+(L2 <- L[, c(1,2)])
+(psi2 <- diag(covX1 - L2 %*% t(L2)))
+```
+a) First two factor loadings are shown above.
+
+Maximum likelihood estimates
+```{r}
+# m = 1
+require(psych)
+fa1 <- fa(covX1, n.obs = n1, fm = "ml")
+loadings(fa1)
+cat("Specific variances:")
+(psi_fa1 <- diag(residuals(fa1))) # specific variance
+cat("MLE residual:")
+residuals(fa1) - diag(psi_fa1)
+cat("PCA residual:")
+covX1 - L1 %*% t(L1) - diag(psi1)
+
+# m = 2
+fa2 <- fa(covX1, nfactors = 2, n.obs = n1, fm = "ml")
+(L2_mle <- loadings(fa2))
+cat("Specific variances:")
+(psi_fa2 <- diag(residuals(fa2))) # specific variance
+cat("MLE residual:")
+residuals(fa2) - diag(psi_fa2)
+cat("PCA residual:")
+covX1 - L2 %*% t(L2) - diag(psi2)
+```
+Factor solutions are shown above. We could compare the residual matrices between these two methods. We find that maximum likelihood method does a better job in this sense.
+
+We can interpret the first principal component as contrasting wind with other pollution and second as maily contrasting NO2. This is different from that of using covariance matrix.
+
+# 10.10
+```{r}
+r11 <- matrix(c(1, .615, .615, 1), nrow = 2)
+r12 <- matrix(c(-.111, -.195, -.266, -.085), nrow = 2)
+r21 <- t(r12)
+r22 <- matrix(c(1, -.269, -.269, 1), nrow = 2)
+
+r <- rbind(cbind(r11, r12), cbind(r21, r22))
+r
+```
+
+```{r}
+# simple matrix power using spectrum decomposition
+matrix_power <- function(A, p) {
+  eig <- eigen(A)
+  V <- eig$vectors
+  L <- eig$values
+  V %*% diag(L ^ p) %*% t(V)
+}
+
+r11sqrt <- matrix_power(r11, -1/2)
+r22sqrt <- matrix_power(r22, -1/2)
+A <- r11sqrt %*% r12 %*% solve(r22, r21) %*% r11sqrt
+B <- r22sqrt %*% r21 %*% solve(r11, r12) %*% r22sqrt
+eigA <- eigen(A)
+eigB <- eigen(B)
+cat("Sample canonical correlations:")
+sqrt(eigA$values)
+cat("First canonical pair:")
+eigA$vectors[, 1] %*% r11sqrt # U_1
+eigB$vectors[, 1] %*% r22sqrt # U_2
+```
+Results are shown above.
+As we can see $\hat U_1 \approx -X_1^{(1)}$ and $\hat U_2 \approx \frac 35 X_1^{(2)} + X_2^{(2)}$, $\hat U_1$ is essentially 1973 nonprimary homicides while $\hat U_2$ is some overall measurement of punishment. These two have largest correlations.

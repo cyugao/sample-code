@@ -1,0 +1,204 @@
+---
+title: "Assignment3"
+output: html_document
+---
+
+## 4.37
+
+By ***Changyu Gao***, PB15121717
+
+We first convert records to speeds measured in m/s, which is what we have done before in Ex 1.18
+
+*We need to modify "KOR, S" to "KOR(S)" and do the similar for "KOR, N" to ensure that the data can be properly imported.*
+
+```{r}
+X0 <- read.table('T1-9.dat', row.names = 1)
+head(X0)
+
+n <- nrow(X0) # sample sizes
+
+scale <- c(100, 200, 400, 800 / 60, 1500 / 60, 3000 / 60, 42195 / 60) # scales
+X <- as.data.frame(t(scale / t(X0))) # Element-wise division in R are done in terms of each column; transpose needed
+head(X)
+
+meanX <- colMeans(X)
+covX <- cov(X)
+p <- ncol(X)
+```
+
+Construct qqplot and compute rqs
+
+```{r}
+plotqq <- function(col, title="") {
+  qqp <- qqnorm(col, main = title)
+  qqline(col)
+  with(qqp, cor(x, y))
+}
+layout(matrix(c(1:6, 0, 7, 0), nrow = 3, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs <- sapply(X, plotqq)
+rqs
+```
+
+From rqs we conclude that first 4 variables have correlation coefficients for Q-Q plot greater than 0.965, while the last three have relatively low coefs. We believe the marginal normality of the first 4 variables while remain doubtful about that of the last 3.
+
+Next we compute mahalanobis (generalized squared) distances and construct chi-square plot
+
+```{r}
+squaredDist <- mahalanobis(X, meanX, covX)
+qqplot(qchisq(ppoints(n, a = .5), df = p), squaredDist, main = "Chi-square Q-Q Plot", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+sum(squaredDist <= qchisq(.5, df = p)) / n # % of falling into first half
+```
+
+We can see that roughly half of $d_j^2 \le q_{c,p}(.50)$ and that
+the chi-square plot is roughly a straight line with slope 1 passing through the origin (except for several outliers). Thus, we have due confidance over the multivariate normality of the data.
+
+## 4.39
+
+Import data
+```{r}
+X1_original <- read.table("T4-6.DAT")
+X1 <- X1_original[1:5] # examine first 5 variables
+head(X1)
+
+meanX1 <- colMeans(X1)
+covX1 <- cov(X1)
+p1 <- ncol(X1)
+n1 <- nrow(X1)
+```
+
+Construct qqplot and compute rqs
+
+```{r}
+layout(matrix(c(1:5, 0), nrow = 2, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs1 <- sapply(X1, plotqq)
+rqs1
+```
+
+We look up the table and find that the critical points for this test with $n=130$ and $\alpha=.05$ is around .989. Comparing this to rqs, we conclude that we doubt the marginal normality of the first and the last variable while others are fine. 
+
+Find the transformation
+
+```{r}
+require(car)
+bc1 <- powerTransform(X1[1])
+lambda1 <- bc1$roundlam # optimal lamda
+Y1 <- bcPower(X1[[1]], lambda1) # perform powerTransform
+
+layout(matrix(c(1:2), nrow = 1, byrow = TRUE), respect = TRUE)
+# before
+plotqq(X1[[1]], "Before")
+# after transformation
+plotqq(Y1, "After")
+
+bc2 <- powerTransform(X1[5])
+lambda2 <- bc2$roundlam # optimal lamda
+Y2 <- bcPower(X1[[5]], lambda2) # perform powerTransform
+
+layout(matrix(c(1:2), nrow = 1, byrow = TRUE), respect = TRUE)
+# before
+plotqq(X1[[5]], "Before")
+# after transformation
+plotqq(Y2, "After")
+```
+
+We can see that after the box-cox transformation the Q-Q plots look much more like straigh lines. And the correlation coefficients rise up to around 0.995
+
+Next we compute mahalanobis (generalized squared) distances and construct chi-square plot
+
+```{r}
+squaredDist1 <- mahalanobis(X1, meanX1, covX1)
+qqplot(qchisq(ppoints(n1, a = .5), df = p1), squaredDist1, main = "Chi-square Q-Q Plot", xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+sum(squaredDist1 <= qchisq(.5, df = p1)) / n1 # % of falling into first half
+```
+
+We can see that roughly half of $d_j^2 \le q_{c,p}(.50)$ and that
+the chi-square plot is roughly a straight line with slope 1 passing through the origin (except for several outliers). Thus, we have due confidance over the multivariate normality of the data.
+
+## 5.4
+
+Import data
+```{r}
+X2 <- read.table('T5-1.DAT', col.names = c("sweat_rate", "sodium", "potassium"))
+meanX2 <- colMeans(X2)
+n2 <- nrow(X2)
+p2 <- ncol(X2)
+covX2 <- cov(X2)
+```
+
+Compute 90% confidence ellipsoid 
+
+```{r}
+eigensys1 <- eigen(covX2)
+eigensys1$vectors # eigenvectors, i.e. axes of the ellipsoid
+alpha = .1
+
+fscale <- function(p, n, a) {
+  p*(n-1)/(n-p)/n * qf(1-a, p, n-p)
+} # compute scale for ellipsoid
+
+axesLength <- sqrt(eigensys1$values * fscale(p2, n2, alpha))
+axesLength # length of axes
+```
+
+Consturct Q-Q plots and paired scatter plots
+```{r}
+layout(matrix(1:3, nrow = 1, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs <- sapply(X2, plotqq)
+
+pairs(X2)
+```
+
+We observe that these Q-Q plots are all approximate straight lines and scatter plot for pairs have approximate elliptical shapes. Therefore, we conclude the multivariate normal assumption is reasonable.
+
+## 5.18
+
+Import data
+```{r}
+X3 <- read.table("T5-2.DAT", col.names = c('social_sci_hist', 
+                                           "verbal", "science"))
+meanX3 <- colMeans(X3)
+n3 <- nrow(X3)
+p3 <- ncol(X3)
+covX3 <- cov(X3)
+```
+
+Test hypothesis at the $\alpha=.05$ level of significance
+
+```{r}
+alpha3 <- .05
+threshold <- fscale(p3, n3, alpha3) # fscale defined as before
+mu3 <- c(500, 50, 30)
+dev <- mu3 - meanX3 # deviation
+squared_dist3 <- as.numeric(dev %*% solve(covX3, dev))
+threshold
+squared_dist3
+squared_dist3 < threshold
+
+```
+
+By calculations we find $\mu = [500, 50, 30]$ lies out of the 95% confidence region. Thus, we reject the null hypothesis at the $\alpha=.05$ level of significance.
+
+Compute axes of the 95% confidence ellipsoid for $\mu$
+
+```{r}
+eigensys3 <- eigen(covX3)
+eigensys3$vectors # eigenvectors, i.e. axes of the ellipsoid
+
+axesLength <- sqrt(eigensys3$values * fscale(p3, n3, alpha3))
+axesLength # length of axes
+```
+
+Construct Q-Q plots for each marginal distributions
+
+```{r}
+layout(matrix(1:3, nrow = 1, byrow = TRUE), respect = TRUE)
+par(mar = rep.int(1, 4))
+rqs <- sapply(X3, plotqq) # Q-Q plot
+
+pairs(X3) # pairwise scatter plot
+```
+
+We observe that these Q-Q plots are all approximate straight lines and scatter plot for pairs have approximate elliptical shapes. Therefore, we conclude the multivariate normal assumption is reasonable.

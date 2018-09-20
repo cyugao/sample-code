@@ -1,0 +1,97 @@
+---
+title: "Assignment6"
+output: html_document
+---
+
+By ***Changyu Gao***, PB15121717
+
+## 6.21
+
+Create data matrices
+```{r}
+n <- 20
+p <- 4
+S1 <- matrix(c(.459, .254, -.026, -.244,
+               .254, 27.465, -.589, -.267,
+               -.026, -.589, .030, .102,
+               -.244, -.267, .102, 6.854), nrow = 4)
+S2 <- matrix(c(.944, -.089, .002, -.719,
+               -.089, 16.432, -.400, 19.044,
+               .002, -.4, .024, -.094,
+               -.719, 19.044, -.094, 61.854), nrow = 4)
+Spool <- matrix(c(.701, .083, -.012, -.481,
+                  .083, 21.949, -.494, 9.388,
+                  -.012, -.494, .027, .004,
+                  -.481, 9.388, .004, 34.354), nrow = 4)
+x1 <- c(2.287, 12.6, .347, 14.83)
+x2 <- c(2.404, 7.155, .524, 12.840)
+```
+
+a) We notice that S1 and S2 differ a lot and n1, n2 are not large. Therefore, the pooling procedure may not work very well.
+
+Test for equality of mean vectors
+```{r}
+d <- x1 - x2 # difference of mean vectors
+T2 <- d %*% solve(2/n * Spool, d)
+T2
+alpha <- .05
+fscale <- function(p, n, a) {
+  p*(n-1)/(n-p)/n * qf(1-a, p, n-p)
+}
+threshold <- (2*n-1) * fscale(p, 2*n-1, alpha) # critical value
+threshold
+comb <- solve(Spool, d)
+comb
+
+comb0 <- comb * sqrt(diag(Spool))
+comb0
+```
+b) Here the $T^2$ statistic is greater than the critical value. Hence, we reject $H_0: \mu_1 - \mu_2 = 0$ at the significant level $\alpha=.05$.
+c) And we find the most responsible linear combination vector $\bar a=(-.24, .16, -3.7, .01)$ by computing $S_{pooled}^{-1}(\bar x_1 - \bar x_2)$.
+d) We compute the standardized vector of $\bar a$ and get $\bar a=(-.20, .75, -.61, .07)$. The second component has the largest magnitude, implying the long-term interest rate might be useful to classify a bond.
+
+Using approximations when covariance matrices are unequal
+```{r}
+I1 <- 1/n * solve((S1 + S2) / n , S1)
+I2 <- 1/n * solve((S1 + S2) / n , S2)
+tr <- function(A) {
+  if (ncol(A) == nrow(A)) sum(diag(A))
+} # trace function
+v <- (p + p^2) * n/ (tr(I1 %*% I1) + tr(I1) ^ 2 +
+                  tr(I2 %*% I2) + tr(I2) ^ 2)
+threshold <- v*p / (v-p+1) * qf(1-alpha, p, v-p+1)
+threshold
+```
+e) We compute the critical value and find it very close to that in b) (difference < .05). Since $T^2$ statistic is greater than the critical value, we reject $H_0: \mu_1 - \mu_2 = 0$ at the significant level $\alpha=.05$. Our conclusion doesn't change.
+
+## 8.10
+Import data
+```{r}
+X <- read.table("T8-4.DAT")
+head(X)
+S <- cov(X)
+S
+pca <- prcomp(X)
+n1 <- nrow(X)
+summary(pca)
+eigval <- pca$sdev ^ 2 # eigenvalues
+eigval
+pca$rotation # show eigenvectors, i.e. principal components
+```
+a) Covariance matrix and principal components are shown above.
+b) From the summary we see that the first three components account for 89.9% of total variance
+
+Compute Bonferroni simultaneous 90% confidence intervals
+```{r}
+alpha1 <- 0.1
+fac <- qnorm(1-alpha1/(2*3)) * sqrt(2/n1)
+eigval[1:3] / (1+fac) # lower end
+eigval[1:3] / (1-fac) # upper end
+```
+
+c) Corresponding confidence intervals are shown above.
+```{r}
+screeplot(pca, type = "lines")
+```
+
+d) We plot the screeplot and decide that the data can be summarized with the first three principal components which altogether contribute to ~90% of the total variance.
