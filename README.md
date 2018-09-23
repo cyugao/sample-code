@@ -6,7 +6,7 @@ Some code samples that I wrote for assignments of online and offline (at the uni
 ### Coursera
 - [Deep Learning Specialization](https://www.coursera.org/specializations/deep-learning) (5 courses)
 - [Machine Learning](https://www.coursera.org/learn/machine-learning)
-- [Algorithms](https://www.coursera.org/learn/algorithms-part1)
+- [Algorithms](https://www.coursera.org/learn/algorithms-part1) [[assignments repo]](Java-Algorithms)
 - [Build a Modern Computer from First Principles: From Nand to Tetris (Project-Centered Course)](https://www.coursera.org/learn/build-a-computer)
 - [Introduction to Logic](https://www.coursera.org/learn/logic-introduction)
 - [Microeconomics Principles](https://www.coursera.org/learn/microeconomics)
@@ -16,7 +16,8 @@ Some code samples that I wrote for assignments of online and offline (at the uni
 - [Introduction to TCP/IP](https://www.coursera.org/learn/tcpip)
 
 ### Edx
-- [CSMM.101x: Artificial Intelligence](https://www.edx.org/course/artificial-intelligence-ai-columbiax-csmm-101x-4)
+- [CSMM.101x: Artificial Intelligence](https://www.edx.org/course/artificial-intelligence-ai-columbiax-csmm-101x-4) [[Assignments]](Python)
 
 ### Lagunita
 - [Statistical Learning](https://lagunita.stanford.edu/courses/HumanitiesSciences/StatLearning/Winter2016/info)
+
